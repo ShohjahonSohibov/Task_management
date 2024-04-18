@@ -47,7 +47,7 @@ const getSingleTask = async (req: any, res: Response): Promise<void> => {
 const getListTasks = async (req: any, res: Response): Promise<void> => {
     try {
         const userID = req.user.userId; // ID is obtained from authentication middleware
-        
+
         const { page = 1, limit = 10, sort, isAdmin, status } = req.query;
         const skip = (Number(page) - 1) * Number(limit);
         let sortOption: { [key: string]: SortOrder } = { created_at: 1 }; // Define sortOption type explicitly
@@ -66,20 +66,33 @@ const getListTasks = async (req: any, res: Response): Promise<void> => {
             aggregationPipeline.push(
                 {
                     $group: {
-                        _id: '$user',
-                        totalTasks: { $sum: 1 },
-                        avgCompletion: { $avg: '$completion' }
+                        _id: "$user", // Group by user
+                        totalTasks: { $sum: 1 }, // Count total tasks for each user
+                        completedTasks: { $sum: { $cond: { if: { $eq: ["$status", "completed"] }, then: 1, else: 0 } } } // Count completed tasks for each user
+                    }
+                },
+                {
+                    $project: {
+                        user: "$_id",
+                        totalTasks: 1,
+                        completedTasks: 1,
+                        averageCompletion: {
+                            $round: [
+                                { $multiply: [{ $divide: ["$completedTasks", "$totalTasks"] }, 100] },
+                                2 // specify the number of decimal places (2 in this case)
+                            ]
+                        }
                     }
                 }
             );
-
-            // Execute aggregation pipeline
-            taskStats = await Task.aggregate(aggregationPipeline);
 
             // Pagination using aggregation framework
             aggregationPipeline.push({ $sort: sortOption });
             aggregationPipeline.push({ $skip: skip });
             aggregationPipeline.push({ $limit: Number(limit) });
+
+            // Execute aggregation pipeline
+            taskStats = await Task.aggregate(aggregationPipeline);
         }
 
         if (status) {

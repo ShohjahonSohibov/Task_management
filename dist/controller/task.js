@@ -62,17 +62,29 @@ const getListTasks = async (req, res) => {
             // Add aggregation pipeline stages for task counts per user and completion averages
             aggregationPipeline.push({
                 $group: {
-                    _id: '$user',
-                    totalTasks: { $sum: 1 },
-                    avgCompletion: { $avg: '$completion' }
+                    _id: "$user", // Group by user
+                    totalTasks: { $sum: 1 }, // Count total tasks for each user
+                    completedTasks: { $sum: { $cond: { if: { $eq: ["$status", "completed"] }, then: 1, else: 0 } } } // Count completed tasks for each user
+                }
+            }, {
+                $project: {
+                    user: "$_id",
+                    totalTasks: 1,
+                    completedTasks: 1,
+                    averageCompletion: {
+                        $round: [
+                            { $multiply: [{ $divide: ["$completedTasks", "$totalTasks"] }, 100] },
+                            2 // specify the number of decimal places (2 in this case)
+                        ]
+                    }
                 }
             });
-            // Execute aggregation pipeline
-            taskStats = await task_1.Task.aggregate(aggregationPipeline);
             // Pagination using aggregation framework
             aggregationPipeline.push({ $sort: sortOption });
             aggregationPipeline.push({ $skip: skip });
             aggregationPipeline.push({ $limit: Number(limit) });
+            // Execute aggregation pipeline
+            taskStats = await task_1.Task.aggregate(aggregationPipeline);
         }
         if (status) {
             options["status"] = status;
