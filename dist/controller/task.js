@@ -44,19 +44,35 @@ const getSingleTask = async (req, res) => {
     }
 };
 exports.getSingleTask = getSingleTask;
-// Function to get list tasks by user
+// Function to get list tasks
 const getListTasks = async (req, res) => {
     try {
-        let options = {};
         const userID = req.user.userId; // ID is obtained from authentication middleware
         const { page = 1, limit = 10, sort, isAdmin, status } = req.query;
         const skip = (Number(page) - 1) * Number(limit);
         let sortOption = { created_at: 1 }; // Define sortOption type explicitly
+        let options = {};
+        const aggregationPipeline = [];
+        let taskStats = [];
         if (sort === 'new') {
-            sortOption = { created_at: -1 }; // Sort by created_at in ascending order (latest first)
+            sortOption = { created_at: -1 }; // Sort by created_at in descending order (latest first)
         }
         if (!Boolean(isAdmin)) {
             options["user"] = userID;
+            // Add aggregation pipeline stages for task counts per user and completion averages
+            aggregationPipeline.push({
+                $group: {
+                    _id: '$user',
+                    totalTasks: { $sum: 1 },
+                    avgCompletion: { $avg: '$completion' }
+                }
+            });
+            // Execute aggregation pipeline
+            taskStats = await task_1.Task.aggregate(aggregationPipeline);
+            // Pagination using aggregation framework
+            aggregationPipeline.push({ $sort: sortOption });
+            aggregationPipeline.push({ $skip: skip });
+            aggregationPipeline.push({ $limit: Number(limit) });
         }
         if (status) {
             options["status"] = status;
@@ -65,7 +81,7 @@ const getListTasks = async (req, res) => {
             .sort(sortOption)
             .skip(skip)
             .limit(Number(limit));
-        res.status(200).json(tasks);
+        res.status(200).json({ tasks, taskStats });
     }
     catch (error) {
         console.error('Error fetching tasks:', error);

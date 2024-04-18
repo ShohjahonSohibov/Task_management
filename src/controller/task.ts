@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { Task, TaskDocument } from '../models/task';
-import { SortOrder } from 'mongoose';
+import mongoose, { SortOrder } from 'mongoose';
 
 // Function to create a task by user
 const createTaskByUser = async (req: Request, res: Response): Promise<void> => {
@@ -16,7 +16,7 @@ const createTaskByUser = async (req: Request, res: Response): Promise<void> => {
             res.status(500).json({ message: 'Internal server error' });
         }
     }
-    
+
 };
 
 // Function to get a single task
@@ -43,24 +43,46 @@ const getSingleTask = async (req: any, res: Response): Promise<void> => {
     }
 };
 
-// Function to get list tasks by user
+// Function to get list tasks
 const getListTasks = async (req: any, res: Response): Promise<void> => {
     try {
-        let options: { [key: string]: String } = {}
         const userID = req.user.userId; // ID is obtained from authentication middleware
+        
         const { page = 1, limit = 10, sort, isAdmin, status } = req.query;
         const skip = (Number(page) - 1) * Number(limit);
         let sortOption: { [key: string]: SortOrder } = { created_at: 1 }; // Define sortOption type explicitly
-        
+        let options: { [key: string]: String } = {}
+        const aggregationPipeline: any[] = [];
+        let taskStats: any[] = []
+
         if (sort === 'new') {
-            sortOption = { created_at: -1 }; // Sort by created_at in ascending order (latest first)
+            sortOption = { created_at: -1 }; // Sort by created_at in descending order (latest first)
         }
 
         if (!Boolean(isAdmin)) {
             options["user"] = userID;
-          }
-          
-        if (status) { 
+
+            // Add aggregation pipeline stages for task counts per user and completion averages
+            aggregationPipeline.push(
+                {
+                    $group: {
+                        _id: '$user',
+                        totalTasks: { $sum: 1 },
+                        avgCompletion: { $avg: '$completion' }
+                    }
+                }
+            );
+
+            // Execute aggregation pipeline
+            taskStats = await Task.aggregate(aggregationPipeline);
+
+            // Pagination using aggregation framework
+            aggregationPipeline.push({ $sort: sortOption });
+            aggregationPipeline.push({ $skip: skip });
+            aggregationPipeline.push({ $limit: Number(limit) });
+        }
+
+        if (status) {
             options["status"] = status
         }
         const tasks: TaskDocument[] = await Task.find(options)
@@ -68,7 +90,7 @@ const getListTasks = async (req: any, res: Response): Promise<void> => {
             .skip(skip)
             .limit(Number(limit));
 
-        res.status(200).json(tasks);
+        res.status(200).json({ tasks, taskStats });
     } catch (error) {
         console.error('Error fetching tasks:', error);
         res.status(500).json({ message: 'Internal server error' });
@@ -91,8 +113,8 @@ const updateTaskByUser = async (req: Request, res: Response): Promise<void> => {
             { _id: taskID },
             { $set: updatedTaskData, $unset: { user: 1 } },
             { new: true, runValidators: true }
-          );
-          
+        );
+
         if (!updatedTask) {
             res.status(404).json({ message: 'Task not found' });
             return;
