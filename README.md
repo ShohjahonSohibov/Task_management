@@ -1,5 +1,40 @@
 TASK_MANAGEMENT
 
+### How to run project
+
+**Running the Project (3 Simple Steps)**
+
+This project is designed to be easy to set up and run. Follow these three commands to get started:
+
+**1. Install Dependencies:**
+
+* Open your terminal or command prompt.
+* Navigate to the directory where you cloned the project using `cd your-repo-name` (replace `your-repo-name` with the actual name).
+* Run the following command to install all the necessary libraries and packages listed in the project's `package.json` file:
+  Bash
+
+  ```
+  npm install
+  ```
+
+  Use code [with caution.](https://gemini.google.com/faq#coding)
+
+  content_copy
+
+**2. Start the Development Server (Recommended):**
+
+* To start the development server, which allows hot reloading and automatic updates whenever you make changes to the code, run:
+  Bash
+
+  ```
+  npm start
+  ```
+
+  Use code [with caution.](https://gemini.google.com/faq#coding)
+
+  content_copy
+* Alternatively, if the project uses a different development script name, refer to the project's specific instructions or look for a script named `dev` or `start:dev` in the `package.json` file.
+* Once the server starts, it typically listens on a port (often `3000` by default). You can access the application in your web browser by visiting `http://localhost:<port>`, replacing `<port>` with the actual port number.
 
 ### Auth
 

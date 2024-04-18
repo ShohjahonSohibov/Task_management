@@ -31,7 +31,6 @@ const getSingleTask = async (req, res) => {
         if (!Boolean(isAdmin)) {
             query['user'] = userID;
         }
-        console.log("query:", query);
         const task = await task_1.Task.findOne(query);
         if (!task) {
             res.status(404).json({ message: 'Task not found' });
