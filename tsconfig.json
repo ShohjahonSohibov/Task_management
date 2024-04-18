@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "module": "commonjs", // Output module format (commonjs for Node.js)
+    "declaration": true,  // Generate type declarations (.d.ts files)
+    "target": "esnext",    // Target ECMAScript version (use "esnext" for latest features)
+    "sourceMap": true,    // Generate source maps for debugging
+    "outDir": "./dist",   // Output directory for compiled JavaScript files
+    "baseUrl": "./",      // Base directory for resolving modules (optional)
+    "incremental": true,   // Enable incremental compilation (optional)
+    "esModuleInterop": true 
+  }
+}

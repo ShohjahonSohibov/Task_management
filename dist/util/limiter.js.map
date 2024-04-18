@@ -1,0 +1,1 @@
+{"version":3,"file":"limiter.js","sourceRoot":"","sources":["../../src/util/limiter.ts"],"names":[],"mappings":";;;;;AAAA,4EAA0C;AAE1C,MAAM,OAAO,GAAG,IAAA,4BAAS,EAAC;IACxB,QAAQ,EAAE,CAAC,GAAG,EAAE,GAAG,IAAI,EAAE,mBAAmB;IAC5C,GAAG,EAAE,CAAC,EAAE,iCAAiC;IACzC,OAAO,EAAE,EAAE,OAAO,EAAE,kDAAkD,EAAE;CACzE,CAAC,CAAC;AAEH,kBAAe,OAAO,CAAC"}
